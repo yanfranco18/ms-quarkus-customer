@@ -13,7 +13,8 @@
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
     <quarkus.platform.version>3.25.3</quarkus.platform.version>
     <surefire-plugin.version>3.5.3</surefire-plugin.version>
-    <lombok.version>1.18.32</lombok.version> <mapstruct.version>1.5.5.Final</mapstruct.version>
+    <lombok.version>1.18.32</lombok.version>
+    <mapstruct.version>1.5.5.Final</mapstruct.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -30,6 +31,10 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-arc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-hibernate-validator</artifactId>
     </dependency>
 
     <dependency>
@@ -112,7 +117,7 @@
             </path>
           </annotationProcessorPaths>
           <compilerArgs>
-            <arg>-Amapstruct.defaultComponentModel=cdi</arg> </compilerArgs>
+            <arg>-Amapstruct.default.componentModel=cdi</arg> </compilerArgs>
         </configuration>
       </plugin>
       <plugin>

@@ -4,7 +4,9 @@ import com.bancario.customerservice.controller.dto.CustomerDto;
 import com.bancario.customerservice.repository.entity.Customer;
 import com.bancario.customerservice.mapper.CustomerMapper;
 import com.bancario.customerservice.repository.CustomerRepository;
+import com.bancario.customerservice.repository.entity.CustomerType;
 import com.bancario.customerservice.service.CustomerService;
+import io.quarkus.mongodb.panache.common.reactive.Panache;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -26,16 +28,30 @@ public class CustomerServiceImpl implements CustomerService {
     public Uni<CustomerDto> createCustomer(CustomerDto customerDto) {
         log.info("Creating a new customer of type: {}", customerDto.getType());
 
-        if (customerDto.getType() == null) {
-            log.warn("Customer type is missing in the request.");
-            return Uni.createFrom().failure(new IllegalArgumentException("Customer type must be specified"));
-        }
+        // **Nueva Lógica de Validación**
+        validateCustomerData(customerDto);
 
         Customer customerEntity = customerMapper.toEntity(customerDto);
-        return customerRepository.persist(customerEntity)
+
+        return Panache.withTransaction(() -> customerRepository.persist(customerEntity))
                 .onItem().invoke(persistedCustomer -> log.info("Customer with ID {} created successfully", persistedCustomer.id))
                 .onFailure().invoke(throwable -> log.error("Failed to create customer: {}", throwable.getMessage(), throwable))
-                .onItem().transform(customer -> customerMapper.toDto(customer));
+                .onItem().transform(persistedCustomer -> customerMapper.toDto(persistedCustomer));
+    }
+
+    private void validateCustomerData(CustomerDto dto) {
+        if (dto.getType() == null) {
+            throw new IllegalArgumentException("Customer type must be specified");
+        }
+        if (dto.getType() == CustomerType.PERSONAL) {
+            if (dto.getFirstName() == null || dto.getLastName() == null || dto.getDni() == null) {
+                throw new IllegalArgumentException("Personal customer requires firstName, lastName, and dni.");
+            }
+        } else if (dto.getType() == CustomerType.EMPRESARIAL) {
+            if (dto.getBusinessName() == null || dto.getRuc() == null || dto.getLegalRepresentative() == null) {
+                throw new IllegalArgumentException("Business customer requires businessName, ruc, and legalRepresentative.");
+            }
+        }
     }
 
     @Override
